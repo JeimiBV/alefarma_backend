@@ -84,3 +84,9 @@ def forecast_range(request: ForecastRangeRequest):
         "end": request.end,
         "forecast": forecast_df[['ds','yhat','yhat_lower','yhat_upper']].to_dict(orient='records')
     }
+
+@app.get("/last_training_date")
+def last_training_date():
+    last_training_date = model.history['ds'].max()
+
+    return {"last_training_date": last_training_date.strftime('%Y-%m-%d')}
