@@ -3,18 +3,18 @@ import pandas as pd
 from app.models.prophet_loader import model
 from app.schemas.forecast_schemas import ForecastRequest
 from app.schemas.forecast_schemas import ForecastRangeRequest
+from datetime import datetime
+
 
 router = APIRouter()
 
 @router.post("/forecast")
 def forecast(request: ForecastRequest):
-    if request.last_date:
-        start_date = pd.to_datetime(request.last_date)
-    else:
-        start_date = model.history['ds'].max()
+    # Predicción operativa: siempre desde HOY
+    start_date = pd.to_datetime(datetime.today().date())
 
     future_dates = pd.date_range(
-        start=start_date + pd.Timedelta(days=1),
+        start=start_date,
         periods=request.days,
         freq="D"
     )
@@ -29,8 +29,10 @@ def forecast(request: ForecastRequest):
     result = forecast_df[["ds", "yhat", "yhat_lower", "yhat_upper"]].copy()
     result["ds"] = result["ds"].dt.strftime("%Y-%m-%d")
 
-    return {"forecast": result.to_dict(orient="records")}
-
+    return {
+        "start": start_date.strftime("%Y-%m-%d"),
+        "forecast": result.to_dict(orient="records")
+    }
 
 @router.post("/forecast/range")
 def forecast_range(request: ForecastRangeRequest):
